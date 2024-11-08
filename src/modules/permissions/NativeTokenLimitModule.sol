@@ -32,8 +32,7 @@ import {IERC165, ModuleBase} from "../ModuleBase.sol";
 /// @notice This module supports a total native token spend limit across User Operation gas and native transfers.
 /// - None of the functions are installed on the account. Account states are to be retrieved from this global
 ///   singleton directly.
-/// - This module only tracks native transfers for the 4 functions `execute`, `executeBatch`, `performCreate`,
-///   and `performCreate2.
+/// - This module only tracks native transfers for the 4 functions `execute`, `executeBatch`, `performCreate`.
 /// - By default, using a paymaster in a UO would cause the limit to not decrease. If an account uses a special
 ///   paymaster that converts non-native tokens in the account to pay for gas, this paymaster should be added to
 ///   the `specialPaymasters` list to enable the correct accounting of spend limits. When these paymasters are used
@@ -46,6 +45,7 @@ contract NativeTokenLimitModule is ModuleBase, IExecutionHookModule, IValidation
     mapping(address paymaster => mapping(address account => bool allowed)) public specialPaymasters;
 
     error ExceededNativeTokenLimit();
+    error InvalidPaymaster();
 
     /// @notice Update the native token limit for a specific entity
     /// @param entityId The entity id
@@ -68,27 +68,19 @@ contract NativeTokenLimitModule is ModuleBase, IExecutionHookModule, IValidation
         returns (uint256)
     {
         // Decrease limit only if no paymaster is used, or if its a special paymaster
-        if (
-            userOp.paymasterAndData.length == 0
-                || specialPaymasters[address(bytes20(userOp.paymasterAndData[:20]))][msg.sender]
-        ) {
-            uint256 vgl = UserOperationLib.unpackVerificationGasLimit(userOp);
-            uint256 cgl = UserOperationLib.unpackCallGasLimit(userOp);
-            uint256 pvgl;
-            uint256 ppogl;
-            if (userOp.paymasterAndData.length > 0) {
-                // Can skip the EP length check here since it would have reverted there if it was invalid
-                (, pvgl, ppogl) = UserOperationLib.unpackPaymasterStaticFields(userOp.paymasterAndData);
+        if (userOp.paymasterAndData.length > 0) {
+            address paymaster = address(bytes20(userOp.paymasterAndData[:20]));
+            if (paymaster == address(0)) {
+                revert InvalidPaymaster();
+            } else if (specialPaymasters[paymaster][msg.sender]) {
+                // Special paymaster specified, decrease limit
+                _decreaseLimit(entityId, userOp, true);
             }
-            uint256 totalGas = userOp.preVerificationGas + vgl + cgl + pvgl + ppogl;
-            uint256 usage = totalGas * UserOperationLib.unpackMaxFeePerGas(userOp);
-
-            uint256 limit = limits[entityId][msg.sender];
-            if (usage > limit) {
-                revert ExceededNativeTokenLimit();
-            }
-            limits[entityId][msg.sender] = limit - usage;
+        } else {
+            // No paymaster specified, decrease limit
+            _decreaseLimit(entityId, userOp, false);
         }
+
         return 0;
     }
 
@@ -162,5 +154,24 @@ contract NativeTokenLimitModule is ModuleBase, IExecutionHookModule, IValidation
     /// @inheritdoc ModuleBase
     function supportsInterface(bytes4 interfaceId) public view override(ModuleBase, IERC165) returns (bool) {
         return interfaceId == type(IExecutionHookModule).interfaceId || super.supportsInterface(interfaceId);
+    }
+
+    function _decreaseLimit(uint32 entityId, PackedUserOperation calldata userOp, bool hasPaymaster) internal {
+        uint256 vgl = UserOperationLib.unpackVerificationGasLimit(userOp);
+        uint256 cgl = UserOperationLib.unpackCallGasLimit(userOp);
+        uint256 pvgl;
+        uint256 ppogl;
+        if (hasPaymaster) {
+            // Can skip the EP length check here since it would have reverted there if it was invalid
+            (, pvgl, ppogl) = UserOperationLib.unpackPaymasterStaticFields(userOp.paymasterAndData);
+        }
+        uint256 totalGas = userOp.preVerificationGas + vgl + cgl + pvgl + ppogl;
+        uint256 usage = totalGas * UserOperationLib.unpackMaxFeePerGas(userOp);
+
+        uint256 limit = limits[entityId][msg.sender];
+        if (usage > limit) {
+            revert ExceededNativeTokenLimit();
+        }
+        limits[entityId][msg.sender] = limit - usage;
     }
 }
