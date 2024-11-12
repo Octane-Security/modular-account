@@ -38,7 +38,8 @@ contract PostHookDataTest is AccountTestBase {
     // installed entity id is their index
     MockModule[] public execHooks;
 
-    // installed with entity id 0
+    uint32 public constant NEW_VALIDATION_ENTITY_ID = 1;
+    // installed with entity id 1
     MockModule public validationModule;
 
     ModuleEntity internal _validationFunction;
@@ -207,7 +208,7 @@ contract PostHookDataTest is AccountTestBase {
         account1.installValidation(
             ValidationConfigLib.pack({
                 _module: address(validationModule),
-                _entityId: 0,
+                _entityId: NEW_VALIDATION_ENTITY_ID,
                 _isGlobal: true,
                 _isSignatureValidation: true,
                 _isUserOpValidation: true
@@ -217,6 +218,6 @@ contract PostHookDataTest is AccountTestBase {
             hookInstalls
         );
 
-        _validationFunction = ModuleEntityLib.pack(address(validationModule), 0);
+        _validationFunction = ModuleEntityLib.pack(address(validationModule), NEW_VALIDATION_ENTITY_ID);
     }
 }

@@ -51,7 +51,8 @@ contract PHCallBufferTest is AccountTestBase {
     // installed entity id is their index
     MockModule[] public execHooks;
 
-    // installed with entity id 0
+    uint32 public constant NEW_VALIDATION_ENTITY_ID = 1;
+    // installed with entity id 1
     MockModule public validationModule;
 
     // installed with entity id 1
@@ -242,7 +243,7 @@ contract PHCallBufferTest is AccountTestBase {
             emit ReceivedCall(
                 abi.encodeCall(
                     IValidationModule.validateRuntime,
-                    (address(account1), uint32(0), address(owner1), 0 wei, callData, "")
+                    (address(account1), NEW_VALIDATION_ENTITY_ID, address(owner1), 0 wei, callData, "")
                 ),
                 0
             );
@@ -276,7 +277,7 @@ contract PHCallBufferTest is AccountTestBase {
             emit ReceivedCall(
                 abi.encodeCall(
                     IValidationModule.validateRuntime,
-                    (address(account1), uint32(0), address(owner1), 0 wei, callData, "")
+                    (address(account1), NEW_VALIDATION_ENTITY_ID, address(owner1), 0 wei, callData, "")
                 ),
                 0
             );
@@ -319,7 +320,7 @@ contract PHCallBufferTest is AccountTestBase {
             emit ReceivedCall(
                 abi.encodeCall(
                     IValidationModule.validateRuntime,
-                    (address(account1), uint32(0), address(owner1), 0 wei, callData, "")
+                    (address(account1), NEW_VALIDATION_ENTITY_ID, address(owner1), 0 wei, callData, "")
                 ),
                 0
             );
@@ -363,7 +364,7 @@ contract PHCallBufferTest is AccountTestBase {
             emit ReceivedCall(
                 abi.encodeCall(
                     IValidationModule.validateRuntime,
-                    (address(account1), uint32(0), address(owner1), 0 wei, callData, "")
+                    (address(account1), NEW_VALIDATION_ENTITY_ID, address(owner1), 0 wei, callData, "")
                 ),
                 0
             );
@@ -478,7 +479,7 @@ contract PHCallBufferTest is AccountTestBase {
     }
 
     function _install3ValAssocExecHooks() internal {
-        _install3ValAssocExecHooks(0, false);
+        _install3ValAssocExecHooks(NEW_VALIDATION_ENTITY_ID, false);
     }
 
     function _install3ValAssocExecHooks(uint32 validationEntityId, bool forceInstall) internal {

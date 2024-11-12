@@ -38,6 +38,7 @@ contract DeferredValidationTest is AccountTestBase {
     using ValidationConfigLib for ValidationConfig;
 
     bytes internal _encodedCall;
+    uint32 internal constant _NEW_ENTITY_ID = 1;
     ModuleEntity internal _deferredValidation;
     // The ABI-encoded call to `installValidation(...)` to be used with deferred validation install
     bytes internal _deferredValidationInstallCall;
@@ -49,13 +50,12 @@ contract DeferredValidationTest is AccountTestBase {
 
     function setUp() public override {
         _revertSnapshot = vm.snapshotState();
-        _encodedCall = abi.encodeCall(ModularAccountBase.execute, (makeAddr("dead"), 0, ""));
-        _deferredValidation = ModuleEntityLib.pack(address(_deploySingleSignerValidationModule()), 0);
-        uint32 entityId = 0;
+        _encodedCall = abi.encodeCall(ModularAccountBase.execute, (makeAddr("dead"), 0 wei, ""));
+        _deferredValidation = ModuleEntityLib.pack(address(_deploySingleSignerValidationModule()), _NEW_ENTITY_ID);
 
         (address newSigner, uint256 newSignerKey) = makeAddrAndKey("newSigner");
         _newSignerKey = newSignerKey;
-        bytes memory deferredValidationInstallData = abi.encode(entityId, newSigner);
+        bytes memory deferredValidationInstallData = abi.encode(_NEW_ENTITY_ID, newSigner);
 
         _newUOValidation = ValidationConfigLib.pack({
             _validationFunction: _deferredValidation,

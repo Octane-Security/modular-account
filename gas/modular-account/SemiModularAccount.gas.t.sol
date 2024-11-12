@@ -238,7 +238,7 @@ contract ModularAccountGasTest is ModularAccountBenchmarkBase("SemiModularAccoun
         vm.deal(address(account1), 1 ether);
 
         SingleSignerValidationModule newValidationModule = _deploySingleSignerValidationModule();
-        uint32 newEntityId = 0;
+        uint32 newEntityId = 1;
         (address owner2, uint256 owner2Key) = makeAddrAndKey("owner2");
 
         PackedUserOperation memory userOp = PackedUserOperation({
