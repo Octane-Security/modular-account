@@ -8,6 +8,8 @@ import {
     ValidationConfigLib
 } from "@erc6900/reference-implementation/libraries/ValidationConfigLib.sol";
 
+import {ValidationStorage} from "../account/AccountStorage.sol";
+
 // A type representing a validation lookup key and flags for validation options.
 // The validation lookup key is a tagged union between a direct call validation address and a validation entity ID.
 type ValidationLocator is uint168;
@@ -25,16 +27,28 @@ type ValidationLocator is uint168;
 // 0b______B_ // has deferred action
 // 0b_______C // is global validation
 
-uint8 constant VALIDATION_TYPE_GLOBAL = 1;
-uint8 constant HAS_DEFERRED_ACTION = 2;
-uint8 constant IS_DIRECT_CALL_VALIDATION = 4;
-
 // A type representing only the validation lookup key, with validation options masked out except for the
 // direct call validation flag.
 type ValidationLookupKey is uint168;
 
 library ValidationLocatorLib {
     using ValidationConfigLib for ValidationConfig;
+
+    uint8 internal constant _VALIDATION_TYPE_GLOBAL = 1;
+    uint8 internal constant _HAS_DEFERRED_ACTION = 2;
+    uint8 internal constant _IS_DIRECT_CALL_VALIDATION = 4;
+
+    function moduleEntity(ValidationLocator locator, ValidationStorage storage validationStorage)
+        internal
+        view
+        returns (ModuleEntity result)
+    {
+        if (locator.isDirectCallValidation()) {
+            result = ModuleEntityLib.pack(locator.directCallAddress(), DIRECT_CALL_VALIDATION_ENTITYID);
+        } else {
+            result = ModuleEntityLib.pack(validationStorage.module, locator.entityId());
+        }
+    }
 
     // User op nonce, 4337 mandated layout:
     // 0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA________________ // Parallel Nonce Key
@@ -56,7 +70,7 @@ library ValidationLocatorLib {
     function loadFromNonce(uint256 nonce) internal pure returns (ValidationLocator result) {
         assembly ("memory-safe") {
             nonce := shr(64, nonce)
-            let validationType := and(nonce, IS_DIRECT_CALL_VALIDATION)
+            let validationType := and(nonce, _IS_DIRECT_CALL_VALIDATION)
             // Yul doesn't support if/else, so we use `break` statements to do a branch
             for {} 1 {} {
                 // If using direct call validation, the validation locator contains a 20-byte address
@@ -100,7 +114,7 @@ library ValidationLocatorLib {
             let validationOptions := shr(248, result)
 
             // TODO: measure gas of switch vs for loop
-            switch and(validationOptions, IS_DIRECT_CALL_VALIDATION)
+            switch and(validationOptions, _IS_DIRECT_CALL_VALIDATION)
             case 0 {
                 // If not using direct call validation, the validation locator contains a 32-byte entity ID
 
@@ -145,6 +159,32 @@ library ValidationLocatorLib {
         }
     }
 
+    // Only safe to call if the locator has been asserted to be a direct call validation.
+    function directCallAddress(ValidationLocator locator) internal pure returns (address result) {
+        assembly ("memory-safe") {
+            result := and(shr(8, locator), 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+        }
+    }
+
+    // Only safe to call if the locator has been asserted to be a non-direct call validation.
+    function entityId(ValidationLocator locator) internal pure returns (uint32 result) {
+        assembly ("memory-safe") {
+            result := and(shr(8, locator), 0xFFFFFFFFFFFFFFFF)
+        }
+    }
+
+    function isGlobal(ValidationLocator locator) internal pure returns (bool) {
+        return (ValidationLocator.unwrap(locator) & _VALIDATION_TYPE_GLOBAL) != 0;
+    }
+
+    function hasDeferredAction(ValidationLocator locator) internal pure returns (bool) {
+        return (ValidationLocator.unwrap(locator) & _HAS_DEFERRED_ACTION) != 0;
+    }
+
+    function isDirectCallValidation(ValidationLocator locator) internal pure returns (bool) {
+        return (ValidationLocator.unwrap(locator) & _IS_DIRECT_CALL_VALIDATION) != 0;
+    }
+
     // function getFromValidationConfig(ValidationConfig validationConfig)
     //     internal
     //     pure
@@ -152,7 +192,7 @@ library ValidationLocatorLib {
     // {
     //     if (validationConfig.entityId() == DIRECT_CALL_VALIDATION_ENTITYID) {
     //         result = ValidationLocator.wrap(
-    //             uint168(uint160(validationConfig.module())) << 8 | IS_DIRECT_CALL_VALIDATION
+    //             uint168(uint160(validationConfig.module())) << 8 | _IS_DIRECT_CALL_VALIDATION
     //         );
     //     } else {
     //         result = ValidationLocator.wrap(uint168(uint160(validationConfig.entityId())) << 8);
@@ -166,26 +206,30 @@ library ValidationLocatorLib {
     {
         if (validationConfig.entityId() == DIRECT_CALL_VALIDATION_ENTITYID) {
             result = ValidationLookupKey.wrap(
-                uint168(uint160(validationConfig.module())) << 8 | IS_DIRECT_CALL_VALIDATION
+                uint168(uint160(validationConfig.module())) << 8 | _IS_DIRECT_CALL_VALIDATION
             );
         } else {
             result = ValidationLookupKey.wrap(uint168(uint160(validationConfig.entityId())) << 8);
         }
     }
 
-    function moduleEntityToLookup(ModuleEntity moduleEntity) internal pure returns (ValidationLookupKey result) {
-        (address module, uint32 entityId) = ModuleEntityLib.unpack(moduleEntity);
-        if (entityId == DIRECT_CALL_VALIDATION_ENTITYID) {
-            result = ValidationLookupKey.wrap(uint168(uint160(module)) << 8 | IS_DIRECT_CALL_VALIDATION);
+    function moduleEntityToLookup(ModuleEntity _moduleEntity) internal pure returns (ValidationLookupKey result) {
+        (address module, uint32 _entityId) = ModuleEntityLib.unpack(_moduleEntity);
+        if (_entityId == DIRECT_CALL_VALIDATION_ENTITYID) {
+            result = ValidationLookupKey.wrap(uint168(uint160(module)) << 8 | _IS_DIRECT_CALL_VALIDATION);
         } else {
-            result = ValidationLookupKey.wrap(uint168(uint160(entityId)) << 8);
+            result = ValidationLookupKey.wrap(uint168(uint160(_entityId)) << 8);
         }
+    }
+
+    function directCallLookup(address directCallValidation) internal pure returns (ValidationLookupKey result) {
+        result = ValidationLookupKey.wrap(uint168(uint160(directCallValidation)) << 8 | _IS_DIRECT_CALL_VALIDATION);
     }
 
     // function getFromModuleEntity(ModuleEntity _moduleEntity) internal pure returns (ValidationLocator result) {
     //     (address module, uint32 entityId) = ModuleEntityLib.unpack(_moduleEntity);
     //     if (entityId == DIRECT_CALL_VALIDATION_ENTITYID) {
-    //         result = ValidationLocator.wrap(uint168(uint160(module)) << 8 | IS_DIRECT_CALL_VALIDATION);
+    //         result = ValidationLocator.wrap(uint168(uint160(module)) << 8 | _IS_DIRECT_CALL_VALIDATION);
     //     } else {
     //         result = ValidationLocator.wrap(uint168(uint160(entityId)) << 8);
     //     }
@@ -193,7 +237,7 @@ library ValidationLocatorLib {
 
     // function moduleEntity(ValidationLocator locator, address module) internal pure returns (ModuleEntity result)
     // {
-    //     if (ValidationLocator.unwrap(locator) & IS_DIRECT_CALL_VALIDATION != 0) {
+    //     if (ValidationLocator.unwrap(locator) & _IS_DIRECT_CALL_VALIDATION != 0) {
     //         result = ModuleEntityLib.pack(module, DIRECT_CALL_VALIDATION_ENTITYID);
     //     } else {
     //         uint32 entityId = uint32(ValidationLocator.unwrap(locator) >> 8);
@@ -209,82 +253,83 @@ library ValidationLocatorLib {
 
     // Packing functions. These should not be used in the account, but in scripts and tests.
 
-    function pack(uint32 entityId, bool isGlobal, bool hasDeferredAction)
+    function pack(uint32 _entityId, bool _isGlobal, bool _hasDeferredAction)
         internal
         pure
         returns (ValidationLocator)
     {
-        uint168 result = uint168(entityId) << 8;
-        if (isGlobal) {
-            result |= VALIDATION_TYPE_GLOBAL;
+        uint168 result = uint168(_entityId) << 8;
+        if (_isGlobal) {
+            result |= _VALIDATION_TYPE_GLOBAL;
         }
-        if (hasDeferredAction) {
-            result |= HAS_DEFERRED_ACTION;
+        if (_hasDeferredAction) {
+            result |= _HAS_DEFERRED_ACTION;
         }
 
         return ValidationLocator.wrap(result);
     }
 
-    function packDirectCall(address directCallValidation, bool isGlobal, bool hasDeferredAction)
+    function packDirectCall(address directCallValidation, bool _isGlobal, bool _hasDeferredAction)
         internal
         pure
         returns (ValidationLocator)
     {
-        uint168 result = uint168(uint160(directCallValidation)) << 8 | IS_DIRECT_CALL_VALIDATION;
-        if (isGlobal) {
-            result |= VALIDATION_TYPE_GLOBAL;
+        uint168 result = uint168(uint160(directCallValidation)) << 8 | _IS_DIRECT_CALL_VALIDATION;
+        if (_isGlobal) {
+            result |= _VALIDATION_TYPE_GLOBAL;
         }
-        if (hasDeferredAction) {
-            result |= HAS_DEFERRED_ACTION;
+        if (_hasDeferredAction) {
+            result |= _HAS_DEFERRED_ACTION;
         }
 
         return ValidationLocator.wrap(result);
     }
 
-    function packNonce(uint32 validationEntityId, bool isGlobal, bool hasDeferredAction)
+    function packNonce(uint32 validationEntityId, bool _isGlobal, bool _hasDeferredAction)
         internal
         pure
         returns (uint256 result)
     {
         result = uint256(validationEntityId) << 8;
-        if (isGlobal) {
-            result |= VALIDATION_TYPE_GLOBAL;
+        if (_isGlobal) {
+            result |= _VALIDATION_TYPE_GLOBAL;
         }
-        if (hasDeferredAction) {
-            result |= HAS_DEFERRED_ACTION;
+        if (_hasDeferredAction) {
+            result |= _HAS_DEFERRED_ACTION;
         }
         // Finally, shift left to make space for the sequential nonce key
         result <<= 64;
     }
 
-    function packNonceDirectCall(address directCallValidation, bool isGlobal, bool hasDeferredAction)
+    function packNonceDirectCall(address directCallValidation, bool _isGlobal, bool _hasDeferredAction)
         internal
         pure
         returns (uint256 result)
     {
-        result = uint256(uint160(directCallValidation)) << 8 | IS_DIRECT_CALL_VALIDATION;
-        if (isGlobal) {
-            result |= VALIDATION_TYPE_GLOBAL;
+        result = uint256(uint160(directCallValidation)) << 8 | _IS_DIRECT_CALL_VALIDATION;
+        if (_isGlobal) {
+            result |= _VALIDATION_TYPE_GLOBAL;
         }
-        if (hasDeferredAction) {
-            result |= HAS_DEFERRED_ACTION;
+        if (_hasDeferredAction) {
+            result |= _HAS_DEFERRED_ACTION;
         }
         // Finally, shift left to make space for the sequential nonce key
         result <<= 64;
     }
 
+    // todo: maybe don't do the appending here yet?
     function packSignature(
         uint32 validationEntityId,
-        bool isGlobal,
-        bool hasDeferredAction,
+        bool _isGlobal,
+        bool _hasDeferredAction,
         bytes memory signature
     ) internal pure returns (bytes memory result) {
         uint8 options = 0;
-        if (isGlobal) {
-            options |= VALIDATION_TYPE_GLOBAL;
+        if (_isGlobal) {
+            options |= _VALIDATION_TYPE_GLOBAL;
         }
-        if (hasDeferredAction) {
-            options |= HAS_DEFERRED_ACTION;
+        if (_hasDeferredAction) {
+            options |= _HAS_DEFERRED_ACTION;
         }
 
         return bytes.concat(abi.encodePacked(options, uint32(validationEntityId)), signature);
@@ -292,20 +337,31 @@ library ValidationLocatorLib {
 
     function packSignatureDirectCall(
         address directCallValidation,
-        bool isGlobal,
-        bool hasDeferredAction,
+        bool _isGlobal,
+        bool _hasDeferredAction,
         bytes memory signature
     ) internal pure returns (bytes memory result) {
-        uint8 options = IS_DIRECT_CALL_VALIDATION;
-        if (isGlobal) {
-            options |= VALIDATION_TYPE_GLOBAL;
+        uint8 options = _IS_DIRECT_CALL_VALIDATION;
+        if (_isGlobal) {
+            options |= _VALIDATION_TYPE_GLOBAL;
         }
-        if (hasDeferredAction) {
-            options |= HAS_DEFERRED_ACTION;
+        if (_hasDeferredAction) {
+            options |= _HAS_DEFERRED_ACTION;
         }
 
         return bytes.concat(abi.encodePacked(options, uint160(directCallValidation)), signature);
     }
+
+    // Operators
+
+    function eq(ValidationLookupKey a, ValidationLookupKey b) internal pure returns (bool) {
+        return ValidationLookupKey.unwrap(a) == ValidationLookupKey.unwrap(b);
+    }
+
+    function notEq(ValidationLookupKey a, ValidationLookupKey b) internal pure returns (bool) {
+        return ValidationLookupKey.unwrap(a) != ValidationLookupKey.unwrap(b);
+    }
 }
 
 using ValidationLocatorLib for ValidationLocator global;
+using ValidationLocatorLib for ValidationLookupKey global;

@@ -77,20 +77,24 @@ contract UpgradeToSmaTest is AccountTestBase {
         vm.prank(owner2);
         account1.uninstallValidation(_signerValidation, "", new bytes[](0));
 
-        // Build expected revert data for a UO with the original signer.
-        bytes memory expectedRevertdata = abi.encodeWithSelector(
-            IEntryPoint.FailedOpWithRevert.selector,
-            0,
-            "AA23 reverted",
-            abi.encodeWithSelector(
-                ModularAccountBase.ValidationFunctionMissing.selector, ModularAccountBase.execute.selector
-            )
-        );
+        // TODO: this case is now unreachable because the fallback signer will have the same entity id as the
+        // original signer. Investigate whether or not this case is still reachable in the future.
 
-        // Execute a UO with the original signer and the now uninstalled validation, anticipating a revert.
-        _userOpTransfer(address(account1), owner1Key, expectedRevertdata, transferAmount, false);
+        // // Build expected revert data for a UO with the original signer.
+        // bytes memory expectedRevertdata = abi.encodeWithSelector(
+        //     IEntryPoint.FailedOpWithRevert.selector,
+        //     0,
+        //     "AA23 reverted",
+        //     abi.encodeWithSelector(
+        //         ModularAccountBase.ValidationFunctionMissing.selector, ModularAccountBase.execute.selector
+        //     )
+        // );
 
-        expectedRevertdata = abi.encodeWithSelector(IEntryPoint.FailedOp.selector, 0, "AA24 signature error");
+        // // Execute a UO with the original signer and the now uninstalled validation, anticipating a revert.
+        // _userOpTransfer(address(account1), owner1Key, expectedRevertdata, transferAmount, false);
+
+        bytes memory expectedRevertdata =
+            abi.encodeWithSelector(IEntryPoint.FailedOp.selector, 0, "AA24 signature error");
         // Execute a UO with the original signer and the fallback validation, anticipating a revert.
         _userOpTransfer(address(account1), owner1Key, expectedRevertdata, transferAmount, true);
 
