@@ -104,7 +104,8 @@ contract ValidationIntersectionTest is AccountTestBase {
 
         PackedUserOperation memory userOp;
         userOp.callData = bytes.concat(noHookModule.foo.selector);
-        userOp.signature = _encodeSignature(noHookValidation, SELECTOR_ASSOCIATED_VALIDATION, "");
+        userOp.nonce = _encodeNonce(noHookValidation, SELECTOR_ASSOCIATED_V, 0);
+        userOp.signature = _encodeSignature("");
         bytes32 uoHash = entryPoint.getUserOpHash(userOp);
 
         vm.prank(address(entryPoint));
@@ -121,7 +122,8 @@ contract ValidationIntersectionTest is AccountTestBase {
 
         PackedUserOperation memory userOp;
         userOp.callData = bytes.concat(oneHookModule.bar.selector);
-        userOp.signature = _encodeSignature(oneHookValidation, SELECTOR_ASSOCIATED_VALIDATION, "");
+        userOp.nonce = _encodeNonce(oneHookValidation, SELECTOR_ASSOCIATED_V, 0);
+        userOp.signature = _encodeSignature("");
         bytes32 uoHash = entryPoint.getUserOpHash(userOp);
 
         vm.prank(address(entryPoint));
@@ -139,7 +141,8 @@ contract ValidationIntersectionTest is AccountTestBase {
 
         PackedUserOperation memory userOp;
         userOp.callData = bytes.concat(oneHookModule.bar.selector);
-        userOp.signature = _encodeSignature(oneHookValidation, SELECTOR_ASSOCIATED_VALIDATION, "");
+        userOp.nonce = _encodeNonce(oneHookValidation, SELECTOR_ASSOCIATED_V, 0);
+        userOp.signature = _encodeSignature("");
         bytes32 uoHash = entryPoint.getUserOpHash(userOp);
 
         vm.prank(address(entryPoint));
@@ -162,7 +165,8 @@ contract ValidationIntersectionTest is AccountTestBase {
 
         PackedUserOperation memory userOp;
         userOp.callData = bytes.concat(oneHookModule.bar.selector);
-        userOp.signature = _encodeSignature(oneHookValidation, SELECTOR_ASSOCIATED_VALIDATION, "");
+        userOp.nonce = _encodeNonce(oneHookValidation, SELECTOR_ASSOCIATED_V, 0);
+        userOp.signature = _encodeSignature("");
         bytes32 uoHash = entryPoint.getUserOpHash(userOp);
 
         vm.prank(address(entryPoint));
@@ -184,7 +188,8 @@ contract ValidationIntersectionTest is AccountTestBase {
 
         PackedUserOperation memory userOp;
         userOp.callData = bytes.concat(oneHookModule.bar.selector);
-        userOp.signature = _encodeSignature(oneHookValidation, SELECTOR_ASSOCIATED_VALIDATION, "");
+        userOp.nonce = _encodeNonce(oneHookValidation, SELECTOR_ASSOCIATED_V, 0);
+        userOp.signature = _encodeSignature("");
         bytes32 uoHash = entryPoint.getUserOpHash(userOp);
 
         vm.prank(address(entryPoint));
@@ -204,7 +209,8 @@ contract ValidationIntersectionTest is AccountTestBase {
 
         PackedUserOperation memory userOp;
         userOp.callData = bytes.concat(oneHookModule.bar.selector);
-        userOp.signature = _encodeSignature(oneHookValidation, SELECTOR_ASSOCIATED_VALIDATION, "");
+        userOp.nonce = _encodeNonce(oneHookValidation, SELECTOR_ASSOCIATED_V, 0);
+        userOp.signature = _encodeSignature("");
         bytes32 uoHash = entryPoint.getUserOpHash(userOp);
 
         vm.prank(address(entryPoint));
@@ -230,7 +236,8 @@ contract ValidationIntersectionTest is AccountTestBase {
 
         PackedUserOperation memory userOp;
         userOp.callData = bytes.concat(oneHookModule.bar.selector);
-        userOp.signature = _encodeSignature(oneHookValidation, SELECTOR_ASSOCIATED_VALIDATION, "");
+        userOp.nonce = _encodeNonce(oneHookValidation, SELECTOR_ASSOCIATED_V, 0);
+        userOp.signature = _encodeSignature("");
         bytes32 uoHash = entryPoint.getUserOpHash(userOp);
 
         vm.prank(address(entryPoint));
@@ -254,7 +261,8 @@ contract ValidationIntersectionTest is AccountTestBase {
 
         PackedUserOperation memory userOp;
         userOp.callData = bytes.concat(oneHookModule.bar.selector);
-        userOp.signature = _encodeSignature(oneHookValidation, SELECTOR_ASSOCIATED_VALIDATION, "");
+        userOp.nonce = _encodeNonce(oneHookValidation, SELECTOR_ASSOCIATED_V, 0);
+        userOp.signature = _encodeSignature("");
         bytes32 uoHash = entryPoint.getUserOpHash(userOp);
 
         vm.prank(address(entryPoint));
@@ -277,7 +285,8 @@ contract ValidationIntersectionTest is AccountTestBase {
 
         PackedUserOperation memory userOp;
         userOp.callData = bytes.concat(twoHookModule.baz.selector);
-        userOp.signature = _encodeSignature(twoHookValidation, SELECTOR_ASSOCIATED_VALIDATION, "");
+        userOp.nonce = _encodeNonce(twoHookValidation, SELECTOR_ASSOCIATED_V, 0);
+        userOp.signature = _encodeSignature("");
         bytes32 uoHash = entryPoint.getUserOpHash(userOp);
 
         vm.prank(address(entryPoint));
@@ -295,8 +304,8 @@ contract ValidationIntersectionTest is AccountTestBase {
 
         PackedUserOperation memory userOp;
         userOp.callData = bytes.concat(twoHookModule.baz.selector);
-
-        userOp.signature = _encodeSignature(twoHookValidation, SELECTOR_ASSOCIATED_VALIDATION, "");
+        userOp.nonce = _encodeNonce(twoHookValidation, SELECTOR_ASSOCIATED_V, 0);
+        userOp.signature = _encodeSignature("");
         bytes32 uoHash = entryPoint.getUserOpHash(userOp);
 
         vm.prank(address(entryPoint));

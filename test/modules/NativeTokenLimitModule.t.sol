@@ -103,16 +103,14 @@ contract NativeTokenLimitModuleTest is AccountTestBase {
     {
         uo = PackedUserOperation({
             sender: address(account1),
-            nonce: 0,
+            nonce: _encodeNonce(ModuleEntityLib.pack(address(validationModule), entityId), GLOBAL_V, 0),
             initCode: "",
             callData: abi.encodePacked(ModularAccountBase.executeUserOp.selector, callData),
             accountGasLimits: bytes32(bytes16(uint128(gas1))) | bytes32(uint256(gas2)),
             preVerificationGas: gas3,
             gasFees: bytes32(uint256(uint128(gasPrice))),
             paymasterAndData: "",
-            signature: _encodeSignature(
-                ModuleEntityLib.pack(address(validationModule), entityId), GLOBAL_VALIDATION, ""
-            )
+            signature: _encodeSignature("")
         });
     }
 
@@ -355,9 +353,7 @@ contract NativeTokenLimitModuleTest is AccountTestBase {
         PreValidationHookData[] memory preValidationHookData = new PreValidationHookData[](1);
         preValidationHookData[0] = PreValidationHookData({index: uint8(0), validationData: "abcd"});
 
-        uos[0].signature = _encodeSignature(
-            ModuleEntityLib.pack(address(validationModule), entityId), GLOBAL_VALIDATION, preValidationHookData, ""
-        );
+        uos[0].signature = _encodeSignature(preValidationHookData, "");
 
         vm.prank(beneficiary);
         vm.expectRevert(

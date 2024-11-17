@@ -106,23 +106,6 @@ contract ValidationLocatorLibTest is Test {
         assertEq(ValidationLookupKey.unwrap(result), ValidationLookupKey.unwrap(expected));
     }
 
-    // function testFuzz_getFromModuleEntity(ModouleEntity validationEntity) public pure {
-
-    //     ValidationLocator result = ValidationLocatorLib.getFromModuleEntity(validationEntity);
-
-    //     (address module, uint32 entityId) = ModuleEntityLib.unpack(validationEntity);
-
-    //     ValidationLocator expected;
-
-    //     if (entityId == DIRECT_CALL_VALIDATION_ENTITYID) {
-    //         expected = ValidationLocatorLib.packDirectCall(module, false, false);
-    //     } else {
-    //         expected = ValidationLocatorLib.pack(entityId, false, false);
-    //     }
-
-    //     assertEq(ValidationLocator.unwrap(result), ValidationLocator.unwrap(expected));
-    // }
-
     function testFuzz_configToLookup(
         ModuleEntity validationEntity,
         bool isGlobal,

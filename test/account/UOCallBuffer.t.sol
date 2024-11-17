@@ -50,7 +50,7 @@ contract UOCallBufferTest is AccountTestBase {
 
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(account1),
-            nonce: 0,
+            nonce: _encodeNonce(_validationFunction, GLOBAL_V, 0),
             initCode: "",
             callData: abi.encodeCall(account1.execute, (beneficiary, 0 wei, "")),
             accountGasLimits: _encodeGas(VERIFICATION_GAS_LIMIT, CALL_GAS_LIMIT),
@@ -79,7 +79,7 @@ contract UOCallBufferTest is AccountTestBase {
         );
 
         // Now, fill in the signature
-        userOp.signature = _encodeSignature(_validationFunction, GLOBAL_VALIDATION, "abcdefghijklmnopqrstuvwxyz");
+        userOp.signature = _encodeSignature("abcdefghijklmnopqrstuvwxyz");
 
         vm.prank(address(entryPoint));
         account1.validateUserOp(userOp, userOpHash, 1 wei);
@@ -93,7 +93,7 @@ contract UOCallBufferTest is AccountTestBase {
 
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(account1),
-            nonce: 0,
+            nonce: _encodeNonce(_validationFunction, GLOBAL_V, 0),
             initCode: "",
             callData: abi.encodeCall(account1.execute, (beneficiary, 0 wei, "")),
             accountGasLimits: _encodeGas(VERIFICATION_GAS_LIMIT, CALL_GAS_LIMIT),
@@ -130,8 +130,7 @@ contract UOCallBufferTest is AccountTestBase {
         );
 
         // Now, fill in the signature
-        userOp.signature =
-            _encodeSignature(_validationFunction, GLOBAL_VALIDATION, preValidationHookDatasToSend, validationData);
+        userOp.signature = _encodeSignature(preValidationHookDatasToSend, validationData);
 
         vm.prank(address(entryPoint));
         account1.validateUserOp(userOp, userOpHash, 1 wei);
@@ -179,7 +178,7 @@ contract UOCallBufferTest is AccountTestBase {
         // Set up the user op
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(account1),
-            nonce: 0,
+            nonce: _encodeNonce(_validationFunction, GLOBAL_V, 0),
             initCode: "",
             callData: abi.encodeCall(account1.execute, (beneficiary, 0 wei, "")),
             accountGasLimits: _encodeGas(VERIFICATION_GAS_LIMIT, CALL_GAS_LIMIT),
@@ -218,8 +217,7 @@ contract UOCallBufferTest is AccountTestBase {
         );
 
         // Now, fill in the signature
-        userOp.signature =
-            _encodeSignature(_validationFunction, GLOBAL_VALIDATION, preValidationHookDatasToSend, validationData);
+        userOp.signature = _encodeSignature(preValidationHookDatasToSend, validationData);
 
         vm.prank(address(entryPoint));
         account1.validateUserOp(userOp, userOpHash, 1 wei);
@@ -230,14 +228,14 @@ contract UOCallBufferTest is AccountTestBase {
 
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(account1),
-            nonce: 0,
+            nonce: _encodeNonce(_validationFunction, GLOBAL_V, 0),
             initCode: "",
             callData: abi.encodeCall(account1.execute, (beneficiary, 0 wei, "")),
             accountGasLimits: _encodeGas(VERIFICATION_GAS_LIMIT, CALL_GAS_LIMIT),
             preVerificationGas: 0,
             gasFees: _encodeGas(1, 2),
             paymasterAndData: "",
-            signature: _encodeSignature(_validationFunction, GLOBAL_VALIDATION, "abcdefghijklmnopqrstuvwxyz")
+            signature: _encodeSignature("abcdefghijklmnopqrstuvwxyz")
         });
         bytes32 userOpHash = entryPoint.getUserOpHash(userOp);
 
@@ -265,14 +263,14 @@ contract UOCallBufferTest is AccountTestBase {
     function test_uoCallBuffer_shortReturnData_validationFunction() public {
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(account1),
-            nonce: 0,
+            nonce: _encodeNonce(_signerValidation, GLOBAL_V, 0),
             initCode: "",
             callData: abi.encodeCall(account1.execute, (beneficiary, 0 wei, "")),
             accountGasLimits: _encodeGas(VERIFICATION_GAS_LIMIT, CALL_GAS_LIMIT),
             preVerificationGas: 0,
             gasFees: _encodeGas(1, 2),
             paymasterAndData: "",
-            signature: _encodeSignature(_signerValidation, GLOBAL_VALIDATION, "abcdefghijklmnopqrstuvwxyz")
+            signature: _encodeSignature("abcdefghijklmnopqrstuvwxyz")
         });
         bytes32 userOpHash = entryPoint.getUserOpHash(userOp);
 

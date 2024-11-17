@@ -102,7 +102,7 @@ contract MultiValidationTest is AccountTestBase {
 
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(account1),
-            nonce: 0,
+            nonce: _encodeNonce(ModuleEntityLib.pack(address(validator2), ENTITY_ID_1), GLOBAL_V, 0),
             initCode: "",
             callData: abi.encodeCall(ModularAccountBase.execute, (CODELESS_ADDRESS, 0, "")),
             accountGasLimits: _encodeGas(VERIFICATION_GAS_LIMIT, CALL_GAS_LIMIT),
@@ -115,11 +115,7 @@ contract MultiValidationTest is AccountTestBase {
         // Generate signature
         bytes32 userOpHash = entryPoint.getUserOpHash(userOp);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(owner2Key, userOpHash.toEthSignedMessageHash());
-        userOp.signature = _encodeSignature(
-            ModuleEntityLib.pack(address(validator2), ENTITY_ID_1),
-            GLOBAL_VALIDATION,
-            abi.encodePacked(EOA_TYPE_SIGNATURE, r, s, v)
-        );
+        userOp.signature = _encodeSignature(abi.encodePacked(EOA_TYPE_SIGNATURE, r, s, v));
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = userOp;
@@ -128,13 +124,10 @@ contract MultiValidationTest is AccountTestBase {
 
         // Sign with owner 1, expect fail
 
-        userOp.nonce = 1;
+        userOp.nonce = _encodeNonce(ModuleEntityLib.pack(address(validator2), ENTITY_ID_1), GLOBAL_V, 1);
+        userOpHash = entryPoint.getUserOpHash(userOp);
         (v, r, s) = vm.sign(owner1Key, userOpHash.toEthSignedMessageHash());
-        userOp.signature = _encodeSignature(
-            ModuleEntityLib.pack(address(validator2), ENTITY_ID_1),
-            GLOBAL_VALIDATION,
-            abi.encodePacked(EOA_TYPE_SIGNATURE, r, s, v)
-        );
+        userOp.signature = _encodeSignature(abi.encodePacked(EOA_TYPE_SIGNATURE, r, s, v));
 
         userOps[0] = userOp;
         vm.expectRevert(abi.encodeWithSelector(IEntryPoint.FailedOp.selector, 0, "AA24 signature error"));

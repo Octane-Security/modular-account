@@ -192,7 +192,7 @@ abstract contract ModularAccountBase is
     function executeUserOp(PackedUserOperation calldata userOp, bytes32) external override {
         _requireFromEntryPoint();
 
-        (ValidationLocator locator,) = ValidationLocatorLib.loadFromSignature(userOp.signature);
+        ValidationLocator locator = ValidationLocatorLib.loadFromNonce(userOp.nonce);
 
         HookConfig[] memory validationAssocExecHooks =
             MemManagementLib.loadExecHooks(getAccountStorage().validationStorage[locator.lookupKey()]);
@@ -402,8 +402,9 @@ abstract contract ModularAccountBase is
         override
         returns (uint256 validationData)
     {
-        (ValidationLocator locator, bytes calldata userOpSignature) =
-            ValidationLocatorLib.loadFromSignature(userOp.signature);
+        ValidationLocator locator = ValidationLocatorLib.loadFromNonce(userOp.nonce);
+
+        bytes calldata userOpSignature = userOp.signature;
 
         /// The calldata layout is unique for deferred validation installation.
         /// Byte indices are [inclusive, exclusive] and relative to the start of the signature after the locator is

@@ -71,18 +71,17 @@ library ValidationLocatorLib {
         assembly ("memory-safe") {
             nonce := shr(64, nonce)
             let validationType := and(nonce, _IS_DIRECT_CALL_VALIDATION)
-            // Yul doesn't support if/else, so we use `break` statements to do a branch
-            for {} 1 {} {
-                // If using direct call validation, the validation locator contains a 20-byte address
-                if validationType {
-                    // Mask it to the lower 21 bytes
-                    result := and(nonce, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
-                    break
-                }
+
+            switch validationType
+            case 0 {
                 // If not using direct call validation, the validation locator contains a 32-byte entity ID
                 // Mask it to the lower 5 bytes
                 result := and(nonce, 0xFFFFFFFFFF)
-                break
+            }
+            default {
+                // If using direct call validation, the validation locator contains a 20-byte address
+                // Mask it to the lower 21 bytes
+                result := and(nonce, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
             }
         }
     }
@@ -113,7 +112,6 @@ library ValidationLocatorLib {
 
             let validationOptions := shr(248, result)
 
-            // TODO: measure gas of switch vs for loop
             switch and(validationOptions, _IS_DIRECT_CALL_VALIDATION)
             case 0 {
                 // If not using direct call validation, the validation locator contains a 32-byte entity ID
@@ -184,20 +182,6 @@ library ValidationLocatorLib {
     function isDirectCallValidation(ValidationLocator locator) internal pure returns (bool) {
         return (ValidationLocator.unwrap(locator) & _IS_DIRECT_CALL_VALIDATION) != 0;
     }
-
-    // function getFromValidationConfig(ValidationConfig validationConfig)
-    //     internal
-    //     pure
-    //     returns (ValidationLocator result)
-    // {
-    //     if (validationConfig.entityId() == DIRECT_CALL_VALIDATION_ENTITYID) {
-    //         result = ValidationLocator.wrap(
-    //             uint168(uint160(validationConfig.module())) << 8 | _IS_DIRECT_CALL_VALIDATION
-    //         );
-    //     } else {
-    //         result = ValidationLocator.wrap(uint168(uint160(validationConfig.entityId())) << 8);
-    //     }
-    // }
 
     function configToLookup(ValidationConfig validationConfig)
         internal
@@ -317,7 +301,6 @@ library ValidationLocatorLib {
         result <<= 64;
     }
 
-    // todo: maybe don't do the appending here yet?
     function packSignature(
         uint32 validationEntityId,
         bool _isGlobal,
@@ -356,10 +339,6 @@ library ValidationLocatorLib {
 
     function eq(ValidationLookupKey a, ValidationLookupKey b) internal pure returns (bool) {
         return ValidationLookupKey.unwrap(a) == ValidationLookupKey.unwrap(b);
-    }
-
-    function notEq(ValidationLookupKey a, ValidationLookupKey b) internal pure returns (bool) {
-        return ValidationLookupKey.unwrap(a) != ValidationLookupKey.unwrap(b);
     }
 }
 

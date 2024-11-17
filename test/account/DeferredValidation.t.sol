@@ -73,11 +73,9 @@ contract DeferredValidationTest is AccountTestBase {
     // Negatives
 
     function test_fail_deferredValidation_nonceUsed() external withSMATest {
-        uint256 nonce = entryPoint.getNonce(address(account1), 0);
-
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(account1),
-            nonce: nonce,
+            nonce: _encodeNextNonce(address(account1), _deferredValidation, true, true),
             initCode: hex"",
             callData: _encodedCall,
             accountGasLimits: _encodeGas(VERIFICATION_GAS_LIMIT, CALL_GAS_LIMIT),
@@ -121,11 +119,9 @@ contract DeferredValidationTest is AccountTestBase {
         // Note that a deadline of 0 implies no expiry
         vm.warp(2);
 
-        uint256 nonce = entryPoint.getNonce(address(account1), 0);
-
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(account1),
-            nonce: nonce,
+            nonce: _encodeNextNonce(address(account1), _deferredValidation, true, true),
             initCode: hex"",
             callData: _encodedCall,
             accountGasLimits: _encodeGas(VERIFICATION_GAS_LIMIT, CALL_GAS_LIMIT),
@@ -160,11 +156,9 @@ contract DeferredValidationTest is AccountTestBase {
     }
 
     function test_fail_deferredValidation_invalidSig() external withSMATest {
-        uint256 nonce = entryPoint.getNonce(address(account1), 0);
-
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(account1),
-            nonce: nonce,
+            nonce: _encodeNextNonce(address(account1), _deferredValidation, true, true),
             initCode: hex"",
             callData: _encodedCall,
             accountGasLimits: _encodeGas(VERIFICATION_GAS_LIMIT, CALL_GAS_LIMIT),
@@ -208,11 +202,9 @@ contract DeferredValidationTest is AccountTestBase {
         vm.prank(address(entryPoint));
         account1.invalidateDeferredValidationInstallNonce(0);
 
-        uint256 nonce = entryPoint.getNonce(address(account1), 0);
-
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(account1),
-            nonce: nonce,
+            nonce: _encodeNextNonce(address(account1), _deferredValidation, true, true),
             initCode: hex"",
             callData: _encodedCall,
             accountGasLimits: _encodeGas(VERIFICATION_GAS_LIMIT, CALL_GAS_LIMIT),
@@ -251,11 +243,9 @@ contract DeferredValidationTest is AccountTestBase {
     }
 
     function test_fail_deferredValidation_invalidDeferredValidationSig() external withSMATest {
-        uint256 nonce = entryPoint.getNonce(address(account1), 0);
-
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(account1),
-            nonce: nonce,
+            nonce: _encodeNextNonce(address(account1), _deferredValidation, true, true),
             initCode: hex"",
             callData: _encodedCall,
             accountGasLimits: _encodeGas(VERIFICATION_GAS_LIMIT, CALL_GAS_LIMIT),
@@ -301,11 +291,9 @@ contract DeferredValidationTest is AccountTestBase {
             ValidationConfigLib.pack(_signerValidation, true, true, true), new bytes4[](0), "", hooks
         );
 
-        uint256 nonce = entryPoint.getNonce(address(account1), 0);
-
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(account1),
-            nonce: nonce,
+            nonce: _encodeNextNonce(address(account1), _deferredValidation, true, true),
             initCode: hex"",
             callData: _encodedCall,
             accountGasLimits: _encodeGas(VERIFICATION_GAS_LIMIT, CALL_GAS_LIMIT),
@@ -345,11 +333,9 @@ contract DeferredValidationTest is AccountTestBase {
     // Positives
 
     function test_deferredValidation_deployed() external withSMATest {
-        uint256 nonce = entryPoint.getNonce(address(account1), 0);
-
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(account1),
-            nonce: nonce,
+            nonce: _encodeNextNonce(address(account1), _deferredValidation, true, true),
             initCode: hex"",
             callData: _encodedCall,
             accountGasLimits: _encodeGas(VERIFICATION_GAS_LIMIT, CALL_GAS_LIMIT),
@@ -394,11 +380,9 @@ contract DeferredValidationTest is AccountTestBase {
             ValidationConfigLib.pack(_signerValidation, true, true, true), new bytes4[](0), "", hooks
         );
 
-        uint256 nonce = entryPoint.getNonce(address(account1), 0);
-
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(account1),
-            nonce: nonce,
+            nonce: _encodeNextNonce(address(account1), _deferredValidation, true, true),
             initCode: hex"",
             callData: _encodedCall,
             accountGasLimits: _encodeGas(VERIFICATION_GAS_LIMIT, CALL_GAS_LIMIT),
@@ -452,11 +436,9 @@ contract DeferredValidationTest is AccountTestBase {
         // prefund
         vm.deal(address(account2), 100 ether);
 
-        uint256 nonce = entryPoint.getNonce(address(account1), 0);
-
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(account2),
-            nonce: nonce,
+            nonce: _encodeNextNonce(address(account1), _deferredValidation, true, true),
             initCode: initCode,
             callData: _encodedCall,
             accountGasLimits: _encodeGas(VERIFICATION_GAS_LIMIT, CALL_GAS_LIMIT),

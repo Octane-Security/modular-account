@@ -39,13 +39,21 @@ import {ValidationLocator, ValidationLocatorLib} from "../../src/libraries/Valid
 contract ModuleSignatureUtils {
     using ModuleEntityLib for ModuleEntity;
 
+    enum ValidationType {
+        SELECTOR_ASSOCIATED,
+        GLOBAL
+    }
+
     struct PreValidationHookData {
         uint8 index;
         bytes validationData;
     }
 
     uint8 public constant SELECTOR_ASSOCIATED_VALIDATION = 0;
+    ValidationType public constant SELECTOR_ASSOCIATED_V = ValidationType.SELECTOR_ASSOCIATED;
     uint8 public constant GLOBAL_VALIDATION = 1;
+    ValidationType public constant GLOBAL_V = ValidationType.GLOBAL;
+
     uint8 public constant HAS_DEFERRED_ACTION_BIT = 2;
 
     uint8 public constant EOA_TYPE_SIGNATURE = 0;
@@ -62,7 +70,22 @@ contract ModuleSignatureUtils {
     bytes32 internal constant _MODULE_DOMAIN_SEPARATOR =
         keccak256("EIP712Domain(uint256 chainId,address verifyingContract,bytes32 salt)");
 
-    // todo: update the uint8 helpers, add support for deferred actions
+    function _encodeSignature(PreValidationHookData[] memory preValidationHookData, bytes memory validationData)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        bytes memory sig = _packPreHookDatas(preValidationHookData);
+
+        sig = abi.encodePacked(sig, _packFinalSignature(validationData));
+
+        return sig;
+    }
+
+    function _encodeSignature(bytes memory validationData) internal pure returns (bytes memory) {
+        return _packFinalSignature(validationData);
+    }
+
     // helper function to encode a signature, according to the per-hook and per-validation data format.
     function _encodeSignature(
         ModuleEntity validationFunction,
@@ -72,9 +95,7 @@ contract ModuleSignatureUtils {
     ) internal pure returns (bytes memory) {
         // Construct the per-hook data and validation data first, then prefix with the validation locator.
 
-        bytes memory sig = _packPreHookDatas(preValidationHookData);
-
-        sig = abi.encodePacked(sig, _packFinalSignature(validationData));
+        bytes memory sig = _encodeSignature(preValidationHookData, validationData);
 
         (address module, uint32 entityId) = validationFunction.unpack();
 
@@ -209,12 +230,43 @@ contract ModuleSignatureUtils {
         });
     }
 
-    function _packValidationLocator(ModuleEntity validationFunction, uint8 validationSettings)
+    function _encodeNonce(
+        ModuleEntity validationFunction,
+        bool isGlobal,
+        bool hasDeferredAction,
+        uint64 linearNonce
+    ) internal pure returns (uint256) {
+        (address module, uint32 entityId) = validationFunction.unpack();
+
+        if (entityId == DIRECT_CALL_VALIDATION_ENTITYID) {
+            return ValidationLocatorLib.packNonceDirectCall(module, isGlobal, hasDeferredAction) | linearNonce;
+        } else {
+            return ValidationLocatorLib.packNonce(entityId, isGlobal, hasDeferredAction) | linearNonce;
+        }
+    }
+
+    function _encodeNonce(ModuleEntity validationFunction, bool isGlobal, uint64 linearNonce)
         internal
         pure
-        returns (bytes25)
+        returns (uint256)
     {
-        return bytes25(abi.encodePacked(validationFunction, validationSettings));
+        return _encodeNonce(validationFunction, isGlobal, false, linearNonce);
+    }
+
+    function _encodeNonce(ModuleEntity validationFunction, ValidationType validationType, uint64 linearNonce)
+        internal
+        pure
+        returns (uint256)
+    {
+        return _encodeNonce(validationFunction, validationType == ValidationType.GLOBAL, false, linearNonce);
+    }
+
+    function _encodeNonceDefAction(
+        ModuleEntity validationFunction,
+        ValidationType validationType,
+        uint64 linearNonce
+    ) internal pure returns (uint256) {
+        return _encodeNonce(validationFunction, validationType == ValidationType.GLOBAL, true, linearNonce);
     }
 
     // Deferred validation helpers
@@ -222,29 +274,17 @@ contract ModuleSignatureUtils {
     // Internal Helpers
 
     function _encodeDeferredInstallUOSignature(
-        ModuleEntity uoValidationFunction,
-        uint8 globalOrNot,
         bytes memory packedDeferredInstallData,
         bytes memory deferredValidationInstallSig,
         bytes memory uoValidationSig
     ) internal pure returns (bytes memory) {
-        bytes memory sig = abi.encodePacked(
+        return abi.encodePacked(
             uint32(packedDeferredInstallData.length),
             packedDeferredInstallData,
             uint32(deferredValidationInstallSig.length),
             deferredValidationInstallSig,
             uoValidationSig
         );
-
-        (, uint32 entityId) = uoValidationFunction.unpack();
-
-        // Assumes it does not use the direct call path.
-        return ValidationLocatorLib.packSignature({
-            validationEntityId: entityId,
-            _isGlobal: globalOrNot == GLOBAL_VALIDATION,
-            _hasDeferredAction: true,
-            signature: sig
-        });
     }
 
     function _packDeferredInstallData(

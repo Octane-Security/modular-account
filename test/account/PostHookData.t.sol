@@ -57,7 +57,7 @@ contract PostHookDataTest is AccountTestBase {
 
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(account1),
-            nonce: 0,
+            nonce: _encodeNonce(_validationFunction, GLOBAL_V, 0),
             initCode: hex"",
             callData: abi.encodePacked(
                 IAccountExecute.executeUserOp.selector, abi.encodeCall(account1.execute, (beneficiary, 0, hex""))
@@ -66,7 +66,7 @@ contract PostHookDataTest is AccountTestBase {
             preVerificationGas: 0,
             gasFees: _encodeGas(0, 1),
             paymasterAndData: hex"",
-            signature: _encodeSignature(_validationFunction, GLOBAL_VALIDATION, "")
+            signature: _encodeSignature("")
         });
         bytes32 userOpHash = entryPoint.getUserOpHash(userOp);
 

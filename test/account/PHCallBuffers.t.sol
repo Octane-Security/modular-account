@@ -72,7 +72,7 @@ contract PHCallBufferTest is AccountTestBase {
 
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(account1),
-            nonce: 0,
+            nonce: _encodeNonce(_validationFunction, GLOBAL_V, 0),
             initCode: "",
             callData: abi.encodePacked(
                 IAccountExecute.executeUserOp.selector, abi.encodeCall(account1.execute, (beneficiary, 0 wei, ""))
@@ -472,9 +472,9 @@ contract PHCallBufferTest is AccountTestBase {
                 vm.sign(owner1Key, MessageHashUtils.toEthSignedMessageHash(userOpHash));
             bytes memory smaSig = abi.encodePacked(EOA_TYPE_SIGNATURE, r, s, v);
 
-            return _encodeSignature(_validationFunction, GLOBAL_VALIDATION, smaSig);
+            return _encodeSignature(smaSig);
         } else {
-            return _encodeSignature(_validationFunction, GLOBAL_VALIDATION, "");
+            return _encodeSignature("");
         }
     }
 

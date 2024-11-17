@@ -167,11 +167,9 @@ contract UpgradeToSmaTest is AccountTestBase {
         bytes memory encodedCall,
         bytes memory expectedRevertData
     ) internal {
-        uint256 nonce = entryPoint.getNonce(account, 0);
-
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: account,
-            nonce: nonce,
+            nonce: _encodeNextNonce(account, FALLBACK_VALIDATION, true),
             initCode: hex"",
             callData: encodedCall,
             accountGasLimits: _encodeGas(VERIFICATION_GAS_LIMIT, CALL_GAS_LIMIT),
@@ -184,8 +182,7 @@ contract UpgradeToSmaTest is AccountTestBase {
         bytes32 userOpHash = entryPoint.getUserOpHash(userOp);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerKey, userOpHash.toEthSignedMessageHash());
 
-        userOp.signature =
-            _encodeSignature(FALLBACK_VALIDATION, GLOBAL_VALIDATION, abi.encodePacked(EOA_TYPE_SIGNATURE, r, s, v));
+        userOp.signature = _encodeSignature(abi.encodePacked(EOA_TYPE_SIGNATURE, r, s, v));
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = userOp;

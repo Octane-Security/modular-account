@@ -6,11 +6,11 @@
   "Runtime_NativeTransfer": "54420",
   "Runtime_UseSessionKey_Case1_Counter": "78495",
   "Runtime_UseSessionKey_Case1_Token": "111808",
-  "UserOp_BatchTransfers": "197895",
-  "UserOp_Erc20Transfer": "184860",
-  "UserOp_InstallSessionKey_Case1": "531147",
-  "UserOp_NativeTransfer": "161117",
-  "UserOp_UseSessionKey_Case1_Counter": "194822",
-  "UserOp_UseSessionKey_Case1_Token": "225806",
-  "UserOp_deferredValidation": "257299"
+  "UserOp_BatchTransfers": "197831",
+  "UserOp_Erc20Transfer": "184796",
+  "UserOp_InstallSessionKey_Case1": "531083",
+  "UserOp_NativeTransfer": "161053",
+  "UserOp_UseSessionKey_Case1_Counter": "194545",
+  "UserOp_UseSessionKey_Case1_Token": "225517",
+  "UserOp_deferredValidation": "257235"
 }
