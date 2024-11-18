@@ -94,9 +94,6 @@ abstract contract ModularAccountBase is
     bytes4 internal constant _1271_MAGIC_VALUE = 0x1626ba7e;
     bytes4 internal constant _1271_INVALID = 0xffffffff;
 
-    uint8 internal constant _IS_GLOBAL_VALIDATION_BIT = 1;
-    uint8 internal constant _HAS_DEFERRED_ACTION_BIT = 2;
-
     address internal immutable _EXECUTION_INSTALL_DELEGATE;
 
     event DeferredActionNonceInvalidated(uint256 nonce);

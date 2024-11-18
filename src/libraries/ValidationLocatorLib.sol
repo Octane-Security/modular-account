@@ -210,25 +210,6 @@ library ValidationLocatorLib {
         result = ValidationLookupKey.wrap(uint168(uint160(directCallValidation)) << 8 | _IS_DIRECT_CALL_VALIDATION);
     }
 
-    // function getFromModuleEntity(ModuleEntity _moduleEntity) internal pure returns (ValidationLocator result) {
-    //     (address module, uint32 entityId) = ModuleEntityLib.unpack(_moduleEntity);
-    //     if (entityId == DIRECT_CALL_VALIDATION_ENTITYID) {
-    //         result = ValidationLocator.wrap(uint168(uint160(module)) << 8 | _IS_DIRECT_CALL_VALIDATION);
-    //     } else {
-    //         result = ValidationLocator.wrap(uint168(uint160(entityId)) << 8);
-    //     }
-    // }
-
-    // function moduleEntity(ValidationLocator locator, address module) internal pure returns (ModuleEntity result)
-    // {
-    //     if (ValidationLocator.unwrap(locator) & _IS_DIRECT_CALL_VALIDATION != 0) {
-    //         result = ModuleEntityLib.pack(module, DIRECT_CALL_VALIDATION_ENTITYID);
-    //     } else {
-    //         uint32 entityId = uint32(ValidationLocator.unwrap(locator) >> 8);
-    //         result = ModuleEntityLib.pack(module, entityId);
-    //     }
-    // }
-
     function lookupKey(ValidationLocator locator) internal pure returns (ValidationLookupKey result) {
         assembly ("memory-safe") {
             result := and(locator, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF04)
